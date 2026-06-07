@@ -1,0 +1,26 @@
+CREATE TABLE IF NOT EXISTS reviews (
+    id BIGSERIAL PRIMARY KEY,
+    car_id BIGINT NOT NULL REFERENCES cars(id) ON DELETE CASCADE,
+    publisher_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    title VARCHAR(200) NOT NULL,
+    body TEXT NOT NULL,
+    like_count INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(car_id, publisher_id)
+);
+
+CREATE TABLE IF NOT EXISTS review_pros (
+    id BIGSERIAL PRIMARY KEY,
+    review_id BIGINT NOT NULL REFERENCES reviews(id) ON DELETE CASCADE,
+    text VARCHAR(200) NOT NULL,
+    position INT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS review_cons (
+    id BIGSERIAL PRIMARY KEY,
+    review_id BIGINT NOT NULL REFERENCES reviews(id) ON DELETE CASCADE,
+    text VARCHAR(200) NOT NULL,
+    position INT NOT NULL DEFAULT 0
+);
