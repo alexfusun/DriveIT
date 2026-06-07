@@ -62,10 +62,13 @@ driveIT/
 ├── api-contract.md            # Full REST API contract (v1.2.0)
 ├── backend/                   # Spring Boot application
 │   ├── src/
-│   │   ├── main/java/com/driveit/backend/
-│   │   │   └── BackendApplication.java
+│   │   ├── main/java/com/driveit/
+│   │   │   ├── backend/           # Application entry point
+│   │   │   ├── auth/dto/          # Login/Register request & response DTOs
+│   │   │   └── user/              # User entity, Role/PublisherRank enums, repository
 │   │   └── resources/
-│   │       └── application.properties
+│   │       ├── application.yml
+│   │       └── db/migration/      # Flyway scripts (users, brands/models, cars, reviews, likes)
 │   └── pom.xml
 └── frontend/                  # React application (Claude-generated)
     ├── src/
@@ -143,16 +146,17 @@ docker run --name driveit-db \
 
 ### 3. Configure the backend
 
-Edit `backend/src/main/resources/application.properties`:
+`backend/src/main/resources/application.yml` reads its datasource credentials from environment variables (with sensible local defaults already wired in):
 
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/driveit
-spring.datasource.username=driveit
-spring.datasource.password=driveit
-
-jwt.secret=your-secret-key-here
-jwt.expiration=86400000
+```yaml
+spring:
+  datasource:
+    url:      ${DB_URL:jdbc:postgresql://localhost:5432/driveit}
+    username: ${DB_USER:driveit}
+    password: ${DB_PASSWORD:driveit}
 ```
+
+Override `DB_URL`, `DB_USER`, `DB_PASSWORD` via your environment if your local Postgres differs from the defaults above.
 
 ### 4. Run the backend
 
@@ -178,11 +182,14 @@ pnpm dev
 ### Foundation
 - [x] API contract design (v1.2.0)
 - [x] Spring Boot project scaffolded (Spring Boot 3.5, JPA, Security, Flyway, PostgreSQL, Lombok)
+- [x] PostgreSQL running in Docker
 - [x] React frontend complete (all pages, components, and API service layer)
 
 ### Backend — in progress
-- [ ] Database schema & Flyway migrations
-- [ ] Auth module (register / login / JWT filter)
+- [x] Flyway migrations for all tables (users, brands & models, cars, reviews, likes)
+- [x] `User` entity, `Role`/`PublisherRank` enums, and `UserRepository`
+- [x] Auth DTOs (`LoginRequest`/`Response`, `RegisterRequest`/`Response`)
+- [ ] Auth module (JWT issuing/validation, register & login endpoints, security config)
 - [ ] Brand & car CRUD
 - [ ] Review system
 - [ ] Like & reputation system
