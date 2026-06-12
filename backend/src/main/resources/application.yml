@@ -18,3 +18,7 @@ spring:
 
   flyway:
     enabled: true
+
+jwt:
+  secret: ${JWT_SECRET:driveit-super-secret-key-that-is-long-enough-for-hs256-algorithm-minimum}
+  expiration: 86400
