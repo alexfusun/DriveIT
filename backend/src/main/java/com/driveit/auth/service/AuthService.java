@@ -11,6 +11,7 @@ import com.driveit.auth.dto.LoginResponse;
 import com.driveit.auth.dto.RegisterRequest;
 import com.driveit.auth.dto.RegisterResponse;
 import com.driveit.auth.security.JwtUtil;
+import com.driveit.exception.ConflictException;
 import com.driveit.user.entity.User;
 import com.driveit.user.repository.UserRepository;
 import com.driveit.user.entity.Role;
@@ -32,11 +33,11 @@ public class AuthService {
 
     public RegisterResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
-            throw new RuntimeException("Email already in use");
+            throw new ConflictException("Email already in use");
         }
 
         if (userRepository.existsByUsername(request.username())) {
-            throw new RuntimeException("Name already in use");
+            throw new ConflictException("Name already in use");
         }
 
         String hashedPassword = passwordEncoder.encode(request.password());
