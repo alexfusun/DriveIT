@@ -26,7 +26,7 @@ The project is a hands-on practice exercise for **Spring Boot** backend developm
 
 ## Tech Stack
 
-### Backend *(in progress)*
+### Backend *(in progress — auth complete, catalog endpoints next)*
 | Layer | Technology |
 |---|---|
 | Framework | Spring Boot 3.5 |
@@ -63,12 +63,16 @@ driveIT/
 ├── backend/                   # Spring Boot application
 │   ├── src/
 │   │   ├── main/java/com/driveit/
-│   │   │   ├── backend/           # Application entry point
-│   │   │   ├── auth/dto/          # Login/Register request & response DTOs
-│   │   │   └── user/              # User entity, Role/PublisherRank enums, repository
+│   │   │   ├── BackendApplication.java
+│   │   │   ├── auth/               # DTOs, JwtUtil/JwtFilter, SecurityConfig, AuthController/Service
+│   │   │   ├── user/               # User entity, Role/PublisherRank enums, repository
+│   │   │   ├── brand/               # Brand & CarModel entities, repositories, response DTOs
+│   │   │   ├── car/                 # Car, CarSpec, CarImage entities + repository, enums
+│   │   │   ├── common/              # PageResponse and other shared DTOs
+│   │   │   └── exception/           # GlobalExceptionHandler, custom exceptions
 │   │   └── resources/
 │   │       ├── application.yml
-│   │       └── db/migration/      # Flyway scripts (users, brands/models, cars, reviews, likes)
+│   │       └── db/migration/        # Flyway scripts (users, brands/models, cars, reviews, likes)
 │   └── pom.xml
 └── frontend/                  # React application (Claude-generated)
     ├── src/
@@ -119,64 +123,6 @@ Ranks are assigned manually by admins (automatic milestones planned for a future
 
 ---
 
-## Getting Started
-
-### Prerequisites
-- Java 21+
-- Node.js 20+ and pnpm (`npm install -g pnpm`)
-- PostgreSQL 15+ (or Docker)
-- Maven 3.9+
-
-### 1. Clone the repo
-
-```bash
-git clone https://github.com/your-username/driveIT.git
-cd driveIT
-```
-
-### 2. Start the database
-
-```bash
-docker run --name driveit-db \
-  -e POSTGRES_DB=driveit \
-  -e POSTGRES_USER=driveit \
-  -e POSTGRES_PASSWORD=driveit \
-  -p 5432:5432 -d postgres:15
-```
-
-### 3. Configure the backend
-
-`backend/src/main/resources/application.yml` reads its datasource credentials from environment variables (with sensible local defaults already wired in):
-
-```yaml
-spring:
-  datasource:
-    url:      ${DB_URL:jdbc:postgresql://localhost:5432/driveit}
-    username: ${DB_USER:driveit}
-    password: ${DB_PASSWORD:driveit}
-```
-
-Override `DB_URL`, `DB_USER`, `DB_PASSWORD` via your environment if your local Postgres differs from the defaults above.
-
-### 4. Run the backend
-
-```bash
-cd backend
-./mvnw spring-boot:run
-# API available at http://localhost:8080
-```
-
-### 5. Run the frontend
-
-```bash
-cd frontend
-pnpm install
-pnpm dev
-# App available at http://localhost:5173
-```
-
----
-
 ## Roadmap
 
 ### Foundation
@@ -188,9 +134,11 @@ pnpm dev
 ### Backend — in progress
 - [x] Flyway migrations for all tables (users, brands & models, cars, reviews, likes)
 - [x] `User` entity, `Role`/`PublisherRank` enums, and `UserRepository`
-- [x] Auth DTOs (`LoginRequest`/`Response`, `RegisterRequest`/`Response`)
-- [ ] Auth module (JWT issuing/validation, register & login endpoints, security config)
-- [ ] Brand & car CRUD
+- [x] Auth flow complete: DTOs, `JwtUtil`/`JwtFilter`, `SecurityConfig`, `AuthController`/`AuthService` for register & login
+- [x] Global exception handling (`GlobalExceptionHandler`, `ResourceNotFoundException`, `ConflictException`)
+- [x] `Brand` & `CarModel` entities, repositories, and response DTOs
+- [x] `Car`, `CarSpec`, `CarImage` entities + repository, plus `FuelType`/`Transmission`/`Drivetrain` enums
+- [ ] Brand & car service/controller layer (REST endpoints)
 - [ ] Review system
 - [ ] Like & reputation system
 - [ ] Admin panel endpoints
