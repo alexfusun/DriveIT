@@ -176,4 +176,11 @@ public class CarService {
 
         return CarMapper.toDetailResponse(car);
     }
+
+    public void deleteCar(Long id) {
+        Car car = carRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Car not found with id " + id));
+        
+        carRepository.delete(car);
+    }
 }
