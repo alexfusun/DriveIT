@@ -36,7 +36,9 @@ public class CarService {
     private final BrandRepository brandRepository;
     private final CarModelRepository carModelRepository;
 
-    public PageResponse<CarSummaryResponse> getCars(String brand, String model, Integer year, FuelType fuelType, BigDecimal minPrice, BigDecimal maxPrice, int page, int size, String sort) {
+    public PageResponse<CarSummaryResponse> getCars(String brand, String model, Integer year, 
+                                                    FuelType fuelType, BigDecimal minPrice, BigDecimal maxPrice, 
+                                                    int page, int size, String sort) {
         String[] sortParts = sort.split(",");
         Sort.Direction direction = Sort.Direction.fromString(sortParts.length > 1 ? sortParts[1] : "asc");
         Sort sortOrder = Sort.by(direction, sortParts[0]);
