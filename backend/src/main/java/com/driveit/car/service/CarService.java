@@ -124,4 +124,56 @@ public class CarService {
         return CarMapper.toDetailResponse(car);
     }
     
+    public CarDetailResponse updateCar(Long id, CarRequest request) {
+        Car car = carRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Car not found with id " + id));
+        Brand brand = brandRepository.findById(request.brandId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Brand not found for car with id " + id));
+        CarModel model = carModelRepository.findById(request.modelId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Car model not found for car with id " + id));
+                    
+        car.setBrand(brand);
+        car.setCarModel(model);
+        car.setVersion(request.version());
+        car.setYear(request.year());
+        car.setPrice(request.price());
+        car.setImageUrl(request.imageUrl());
+
+        CarSpec carSpec = car.getSpec();
+        carSpec.setCar(car);
+        carSpec.setDisplacement(request.specs().engine().displacement());
+        carSpec.setHorsepower(request.specs().engine().horsepower());
+        carSpec.setTorque(request.specs().engine().torque());
+        carSpec.setFuelType(request.specs().engine().fuelType());
+        carSpec.setCylinders(request.specs().engine().cylinders());
+        carSpec.setConsumption(request.specs().engine().consumption());
+        carSpec.setEmissions(request.specs().engine().emissions());
+        carSpec.setLength(request.specs().dimensions().length());
+        carSpec.setWidth(request.specs().dimensions().width());
+        carSpec.setHeight(request.specs().dimensions().height());
+        carSpec.setWheelbase(request.specs().dimensions().wheelbase());
+        carSpec.setTrunkCapacity(request.specs().dimensions().trunkCapacity());
+        carSpec.setAcceleration0To100(request.specs().performance().acceleration0To100());
+        carSpec.setTopSpeed(request.specs().performance().topSpeed());
+        carSpec.setTransmission(request.specs().transmission());
+        carSpec.setDrivetrain(request.specs().drivetrain());
+        carSpec.setDoors(request.specs().doors());
+        carSpec.setSeats(request.specs().seats());
+
+        car.setSpec(carSpec);
+
+        car.getImages().clear();
+
+        for (int i = 0; i < request.images().size(); i++) {
+            CarImage carImage = new CarImage();
+            carImage.setCar(car);
+            carImage.setUrl(request.images().get(i));
+            carImage.setPosition(i);
+            car.getImages().add(carImage);
+        }
+
+        carRepository.save(car);
+
+        return CarMapper.toDetailResponse(car);
+    }
 }

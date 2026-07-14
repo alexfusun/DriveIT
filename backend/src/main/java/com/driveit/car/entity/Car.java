@@ -61,7 +61,7 @@ public class Car {
     @OneToOne(mappedBy = "car", cascade = CascadeType.ALL)
     private CarSpec spec;
 
-    @OneToMany(mappedBy = "car", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "car", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CarImage> images = new ArrayList<>();
 
 }
