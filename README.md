@@ -26,7 +26,7 @@ The project is a hands-on practice exercise for **Spring Boot** backend developm
 
 ## Tech Stack
 
-### Backend *(in progress — auth complete, catalog endpoints next)*
+### Backend *(in progress — reviews next)*
 | Layer | Technology |
 |---|---|
 | Framework | Spring Boot 3.5 |
@@ -66,10 +66,11 @@ driveIT/
 │   │   │   ├── BackendApplication.java
 │   │   │   ├── auth/               # DTOs, JwtUtil/JwtFilter, SecurityConfig, AuthController/Service
 │   │   │   ├── user/               # User entity, Role/PublisherRank enums, repository
-│   │   │   ├── brand/               # Brand & CarModel entities, repositories, response DTOs
-│   │   │   ├── car/                 # Car, CarSpec, CarImage entities + repository, enums
-│   │   │   ├── common/              # PageResponse and other shared DTOs
-│   │   │   └── exception/           # GlobalExceptionHandler, custom exceptions
+│   │   │   ├── brand/              # Brand & CarModel entities, repos, DTOs, BrandService/Controller
+│   │   │   ├── car/                # Car, CarSpec, CarImage entities, full CRUD service/controller
+│   │   │   ├── review/             # Review, ReviewPro, ReviewCon entities (in progress)
+│   │   │   ├── common/             # PageResponse and other shared DTOs
+│   │   │   └── exception/          # GlobalExceptionHandler, custom exceptions
 │   │   └── resources/
 │   │       ├── application.yml
 │   │       └── db/migration/        # Flyway scripts (users, brands/models, cars, reviews, likes)
@@ -136,10 +137,11 @@ Ranks are assigned manually by admins (automatic milestones planned for a future
 - [x] `User` entity, `Role`/`PublisherRank` enums, and `UserRepository`
 - [x] Auth flow complete: DTOs, `JwtUtil`/`JwtFilter`, `SecurityConfig`, `AuthController`/`AuthService` for register & login
 - [x] Global exception handling (`GlobalExceptionHandler`, `ResourceNotFoundException`, `ConflictException`)
-- [x] `Brand` & `CarModel` entities, repositories, and response DTOs
-- [x] `Car`, `CarSpec`, `CarImage` entities + repository, plus `FuelType`/`Transmission`/`Drivetrain` enums
-- [ ] Brand & car service/controller layer (REST endpoints)
-- [ ] Review system
+- [x] `Brand` & `CarModel` entities, repositories, DTOs, `BrandService`, `BrandController`
+- [x] `Car`, `CarSpec`, `CarImage` entities + repository, enums (`FuelType`, `Transmission`, `Drivetrain`)
+- [x] Car DTOs and mapper, `CarSpecification` for filtered search, full `CarService` and `CarController` (CRUD + filters + sort + pagination)
+- [x] `Review`, `ReviewPro`, `ReviewCon` entities
+- [ ] Review repository, service, and controller
 - [ ] Like & reputation system
 - [ ] Admin panel endpoints
 
