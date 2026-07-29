@@ -38,7 +38,8 @@ public class CarService {
 
     public PageResponse<CarSummaryResponse> getCars(String brand, String model, Integer year, 
                                                     FuelType fuelType, BigDecimal minPrice, BigDecimal maxPrice, 
-                                                    int page, int size, String sort) {
+                                                    int page, int size, String sort) 
+        {
         String[] sortParts = sort.split(",");
         Sort.Direction direction = Sort.Direction.fromString(sortParts.length > 1 ? sortParts[1] : "asc");
         Sort sortOrder = Sort.by(direction, sortParts[0]);
@@ -54,18 +55,18 @@ public class CarService {
             CarSpecification.maxPrice(maxPrice)
         );
 
-        Page<Car> result = carRepository.findAll(spec, pageable);
+        Page<Car> cars = carRepository.findAll(spec, pageable);
 
-        List<CarSummaryResponse> content = result.getContent().stream()
+        List<CarSummaryResponse> content = cars.getContent().stream()
             .map(CarMapper::toSummaryResponse)
             .toList();
 
         return new PageResponse<>(
             content,
-            result.getTotalElements(),
-            result.getTotalPages(),
-            result.getNumber(),
-            result.getSize()
+            cars.getTotalElements(),
+            cars.getTotalPages(),
+            cars.getNumber(),
+            cars.getSize()
         );
     }
 
