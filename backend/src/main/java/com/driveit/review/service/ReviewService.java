@@ -1,5 +1,7 @@
 package com.driveit.review.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,12 +14,18 @@ import org.springframework.stereotype.Service;
 
 import com.driveit.car.entity.Car;
 import com.driveit.car.repository.CarRepository;
+import com.driveit.exception.ConflictException;
 import com.driveit.exception.ResourceNotFoundException;
 import com.driveit.review.dto.ReviewMapper;
 import com.driveit.review.dto.ReviewPageResponse;
+import com.driveit.review.dto.ReviewRequest;
 import com.driveit.review.dto.ReviewResponse;
 import com.driveit.review.entity.Review;
+import com.driveit.review.entity.ReviewCon;
+import com.driveit.review.entity.ReviewPro;
 import com.driveit.review.repository.ReviewRepository;
+import com.driveit.user.entity.User;
+import com.driveit.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,6 +35,7 @@ public class ReviewService {
 
     private final CarRepository carRepository;
     private final ReviewRepository reviewRepository;
+    private final UserRepository userRepository;
     
     public ReviewPageResponse getReviews(Long carId, int page, int size,
                                         String sort, Long currentUserId) 
@@ -60,6 +69,51 @@ public class ReviewService {
             car.getAverageRating(),
             ratingDistribution
         );
+    }
+
+    public ReviewResponse createReview(Long carId, ReviewRequest request, Long publisherId) {
+        Car car = carRepository.findById(carId).orElseThrow(() -> new ResourceNotFoundException("Car not found with id: " + carId));
+        User user = userRepository.findById(publisherId).orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + publisherId));
+        
+        if (reviewRepository.existsByCarIdAndPublisherId(carId, publisherId))
+            throw new ConflictException("You have already reviewed this car");
+
+        Review review = new Review();
+        review.setCar(car);
+        review.setPublisher(user);
+        review.setRating(request.rating());
+        review.setTitle(request.title());
+        review.setBody(request.body());
+        review.setLikeCount(0);
+
+        for (int i = 0; i < request.pros().size(); i++) {
+            ReviewPro pro = new ReviewPro();
+            pro.setReview(review);
+            pro.setText(request.pros().get(i));
+            pro.setPosition(i);
+            review.getPros().add(pro);
+        }
+
+        for (int i = 0; i < request.cons().size(); i++) {
+            ReviewCon con = new ReviewCon();
+            con.setReview(review);
+            con.setText(request.cons().get(i));
+            con.setPosition(i);
+            review.getCons().add(con);
+        }
+
+        int newCount = car.getReviewCount() + 1;
+        BigDecimal newAverage = car.getAverageRating()
+            .multiply(BigDecimal.valueOf(car.getReviewCount()))
+            .add(BigDecimal.valueOf(request.rating()))
+            .divide(BigDecimal.valueOf(newCount), 2, RoundingMode.HALF_UP);
+        car.setReviewCount(newCount);
+        car.setAverageRating(newAverage);
+
+        carRepository.save(car);
+        reviewRepository.save(review);
+
+        return ReviewMapper.toResponse(review, false);
     }
 
 }
