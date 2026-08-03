@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import com.driveit.car.entity.Car;
 import com.driveit.car.repository.CarRepository;
 import com.driveit.exception.ConflictException;
+import com.driveit.exception.ForbiddenException;
 import com.driveit.exception.ResourceNotFoundException;
 import com.driveit.review.dto.ReviewMapper;
 import com.driveit.review.dto.ReviewPageResponse;
@@ -114,6 +115,76 @@ public class ReviewService {
         reviewRepository.save(review);
 
         return ReviewMapper.toResponse(review, false);
+    }
+
+    public ReviewResponse updateReview(Long reviewId, ReviewRequest request, Long publisherId) {
+        Review review = reviewRepository.findById(reviewId).orElseThrow(() -> new ResourceNotFoundException("Review not found with id: " + reviewId));
+        Car car = review.getCar();
+
+        if (!review.getPublisher().getId().equals(publisherId))
+            throw new ForbiddenException("Unable to update review from another publisher");
+
+        
+        int oldRating = review.getRating();
+        review.setRating(request.rating());
+        review.setTitle(request.title());
+        review.setBody(request.body());
+        
+        review.getPros().clear();
+
+        for (int i = 0; i < request.pros().size(); i++) {
+            ReviewPro pro = new ReviewPro();
+            pro.setReview(review);
+            pro.setText(request.pros().get(i));
+            pro.setPosition(i);
+            review.getPros().add(pro);
+        }
+
+        review.getCons().clear();
+
+        for (int i = 0; i < request.cons().size(); i++) {
+            ReviewCon con = new ReviewCon();
+            con.setReview(review);
+            con.setText(request.cons().get(i));
+            con.setPosition(i);
+            review.getCons().add(con);
+        }
+
+        int reviewCount = car.getReviewCount();
+        BigDecimal newAverage = car.getAverageRating()
+            .multiply(BigDecimal.valueOf(reviewCount))
+            .subtract(BigDecimal.valueOf(oldRating))
+            .add(BigDecimal.valueOf(request.rating()))
+            .divide(BigDecimal.valueOf(reviewCount), 2, RoundingMode.HALF_UP);
+        car.setAverageRating(newAverage);
+        
+        carRepository.save(car);
+        reviewRepository.save(review);
+
+        return ReviewMapper.toResponse(review, false);
+    }
+
+    public void deleteReview(Long reviewId, Long callerId, boolean isAdmin) {
+        Review review = reviewRepository.findById(reviewId).orElseThrow(() -> new ResourceNotFoundException("Review not found with id: " + reviewId));
+
+        if (!isAdmin && !review.getPublisher().getId().equals(callerId))
+            throw new ForbiddenException("Unable to delete review from another publisher");
+
+        Car car = review.getCar();
+        int newCount = car.getReviewCount() - 1;
+        car.setReviewCount(newCount);
+        if (newCount == 0) {
+            car.setAverageRating(BigDecimal.ZERO);
+        } else {
+        BigDecimal newAverage = car.getAverageRating()
+            .multiply(BigDecimal.valueOf(newCount + 1))
+            .subtract(BigDecimal.valueOf(review.getRating()))
+            .divide(BigDecimal.valueOf(newCount), 2, RoundingMode.HALF_UP);
+        car.setAverageRating(newAverage);
+        }
+
+        carRepository.save(car);
+        reviewRepository.delete(review);
     }
 
 }
