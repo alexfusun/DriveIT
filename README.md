@@ -26,7 +26,7 @@ The project is a hands-on practice exercise for **Spring Boot** backend developm
 
 ## Tech Stack
 
-### Backend *(in progress — likes & admin next)*
+### Backend *(in progress — likes service/controller & admin next)*
 | Layer | Technology |
 |---|---|
 | Framework | Spring Boot 3.5 |
@@ -69,6 +69,7 @@ driveIT/
 │   │   │   ├── brand/              # Brand & CarModel entities, repos, DTOs, BrandService/Controller
 │   │   │   ├── car/                # Car, CarSpec, CarImage entities, full CRUD service/controller
 │   │   │   ├── review/             # Review entities, DTOs, mapper, ReviewService/Controller
+│   │   │   ├── like/               # ReviewLike entity, LikeRepository, LikeResponse DTO
 │   │   │   ├── common/             # PageResponse and other shared DTOs
 │   │   │   └── exception/          # GlobalExceptionHandler, custom exceptions
 │   │   └── resources/
@@ -142,7 +143,8 @@ Ranks are assigned manually by admins (automatic milestones planned for a future
 - [x] Car DTOs and mapper, `CarSpecification` for filtered search, full `CarService` and `CarController` (CRUD + filters + sort + pagination)
 - [x] `Review`, `ReviewPro`, `ReviewCon` entities, `ReviewRepository`, DTOs, mapper, `ReviewService`, `ReviewController` (get/create/update/delete)
 - [x] `ForbiddenException` added to exception handling
-- [ ] Like & reputation system
+- [x] `ReviewLike` entity, `LikeRepository`, `LikeResponse` DTO
+- [ ] Like service & controller (like/unlike endpoints, reputation update)
 - [ ] Admin panel endpoints
 
 ### Integration & deployment
