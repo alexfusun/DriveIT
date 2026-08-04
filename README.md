@@ -26,7 +26,7 @@ The project is a hands-on practice exercise for **Spring Boot** backend developm
 
 ## Tech Stack
 
-### Backend *(in progress — reviews next)*
+### Backend *(in progress — likes & admin next)*
 | Layer | Technology |
 |---|---|
 | Framework | Spring Boot 3.5 |
@@ -68,7 +68,7 @@ driveIT/
 │   │   │   ├── user/               # User entity, Role/PublisherRank enums, repository
 │   │   │   ├── brand/              # Brand & CarModel entities, repos, DTOs, BrandService/Controller
 │   │   │   ├── car/                # Car, CarSpec, CarImage entities, full CRUD service/controller
-│   │   │   ├── review/             # Review, ReviewPro, ReviewCon entities (in progress)
+│   │   │   ├── review/             # Review entities, DTOs, mapper, ReviewService/Controller
 │   │   │   ├── common/             # PageResponse and other shared DTOs
 │   │   │   └── exception/          # GlobalExceptionHandler, custom exceptions
 │   │   └── resources/
@@ -140,8 +140,8 @@ Ranks are assigned manually by admins (automatic milestones planned for a future
 - [x] `Brand` & `CarModel` entities, repositories, DTOs, `BrandService`, `BrandController`
 - [x] `Car`, `CarSpec`, `CarImage` entities + repository, enums (`FuelType`, `Transmission`, `Drivetrain`)
 - [x] Car DTOs and mapper, `CarSpecification` for filtered search, full `CarService` and `CarController` (CRUD + filters + sort + pagination)
-- [x] `Review`, `ReviewPro`, `ReviewCon` entities
-- [ ] Review repository, service, and controller
+- [x] `Review`, `ReviewPro`, `ReviewCon` entities, `ReviewRepository`, DTOs, mapper, `ReviewService`, `ReviewController` (get/create/update/delete)
+- [x] `ForbiddenException` added to exception handling
 - [ ] Like & reputation system
 - [ ] Admin panel endpoints
 
