@@ -3,6 +3,7 @@ package com.driveit.like.service;
 import org.springframework.stereotype.Service;
 
 import com.driveit.exception.ConflictException;
+import com.driveit.exception.ForbiddenException;
 import com.driveit.exception.ResourceNotFoundException;
 import com.driveit.like.dto.LikeResponse;
 import com.driveit.like.entity.ReviewLike;
@@ -24,6 +25,9 @@ public class LikeService {
 
     public LikeResponse likeReview(Long reviewId, Long userId) {
         Review review = reviewRepository.findById(reviewId).orElseThrow(() -> new ResourceNotFoundException("Review not found with id: " + reviewId));
+        if (review.getPublisher().getId().equals(userId))
+            throw new ForbiddenException("User cannot like his own review");
+
         User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found with id: "+ userId));
         
         if (likeRepository.existsByReviewIdAndUserId(reviewId, userId)) {
@@ -42,6 +46,7 @@ public class LikeService {
 
     public LikeResponse unlikeReview(Long reviewId, Long userId) {
         Review review = reviewRepository.findById(reviewId).orElseThrow(() -> new ResourceNotFoundException("Review not found with id: " + reviewId));
+
         ReviewLike reviewLike = likeRepository.findByReviewIdAndUserId(reviewId, userId).orElseThrow(() -> new ResourceNotFoundException("User has not liked this review"));
         
 

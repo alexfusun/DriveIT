@@ -34,7 +34,7 @@ public class LikeController {
     public ResponseEntity<LikeResponse> createReviewLike(@PathVariable Long reviewId, Authentication authentication) {
        LikeResponse result = likeService.likeReview(reviewId, getCurrentUserId(authentication));
 
-       return ResponseEntity.status(HttpStatus.CREATED).body(result);
+       return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
     @DeleteMapping("/api/v1/reviews/{reviewId}/like")
