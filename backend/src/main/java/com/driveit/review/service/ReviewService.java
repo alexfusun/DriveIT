@@ -103,16 +103,19 @@ public class ReviewService {
             review.getCons().add(con);
         }
 
-        int newCount = car.getReviewCount() + 1;
+        int newReviewCount = car.getReviewCount() + 1;
+        int newUserReviewCount = user.getReviewCount() + 1;
         BigDecimal newAverage = car.getAverageRating()
             .multiply(BigDecimal.valueOf(car.getReviewCount()))
             .add(BigDecimal.valueOf(request.rating()))
-            .divide(BigDecimal.valueOf(newCount), 2, RoundingMode.HALF_UP);
-        car.setReviewCount(newCount);
+            .divide(BigDecimal.valueOf(newReviewCount), 2, RoundingMode.HALF_UP);
+        car.setReviewCount(newReviewCount);
+        user.setReviewCount(newUserReviewCount);
         car.setAverageRating(newAverage);
 
         carRepository.save(car);
         reviewRepository.save(review);
+        userRepository.save(user);
 
         return ReviewMapper.toResponse(review, false);
     }
@@ -171,20 +174,24 @@ public class ReviewService {
             throw new ForbiddenException("Unable to delete review from another publisher");
 
         Car car = review.getCar();
-        int newCount = car.getReviewCount() - 1;
-        car.setReviewCount(newCount);
-        if (newCount == 0) {
+        User user = review.getPublisher();
+        int newReviewCount = car.getReviewCount() - 1;
+        int newUserReviewCount = user.getReviewCount() - 1;
+        car.setReviewCount(newReviewCount);
+        user.setReviewCount(newUserReviewCount);
+        if (newReviewCount == 0) {
             car.setAverageRating(BigDecimal.ZERO);
         } else {
         BigDecimal newAverage = car.getAverageRating()
-            .multiply(BigDecimal.valueOf(newCount + 1))
+            .multiply(BigDecimal.valueOf(newReviewCount + 1))
             .subtract(BigDecimal.valueOf(review.getRating()))
-            .divide(BigDecimal.valueOf(newCount), 2, RoundingMode.HALF_UP);
+            .divide(BigDecimal.valueOf(newReviewCount), 2, RoundingMode.HALF_UP);
         car.setAverageRating(newAverage);
         }
 
         carRepository.save(car);
         reviewRepository.delete(review);
+        userRepository.save(user);
     }
 
 }

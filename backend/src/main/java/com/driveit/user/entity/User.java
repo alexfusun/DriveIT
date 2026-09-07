@@ -37,6 +37,9 @@ public class User {
     @Column(nullable = false)
     private Integer totalLikes = 0;
 
+    @Column(nullable = false)
+    private Integer reviewCount = 0;
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
