@@ -11,6 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.driveit.car.entity.Car;
 import com.driveit.car.repository.CarRepository;
@@ -38,6 +39,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
     
+    @Transactional(readOnly = true) 
     public ReviewPageResponse getReviews(Long carId, int page, int size,
                                         String sort, Long currentUserId) 
     {

@@ -7,6 +7,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.driveit.common.PageResponse;
 import com.driveit.exception.ResourceNotFoundException;
@@ -63,6 +64,7 @@ public class PublisherService {
         return PublisherMapper.toResponse(user);
     }
 
+    @Transactional(readOnly = true)
     public ReviewPageResponse getPublisherReviews(Long publisherId, int page, int size, String sort) {
         User user = userRepository.findById(publisherId).orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + publisherId));
         if (!user.getRole().equals(Role.PUBLISHER))

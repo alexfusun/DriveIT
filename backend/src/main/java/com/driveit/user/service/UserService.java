@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.driveit.exception.ConflictException;
 import com.driveit.exception.ResourceNotFoundException;
@@ -85,6 +86,7 @@ public class UserService {
         return buildProfileResponse(user);
     }
 
+    @Transactional(readOnly = true)
     public ReviewPageResponse getMyReviews(Long userId, int page, int size, String sort) {
         String[] sortParts = sort.split(",");
         Sort.Direction direction = Sort.Direction.fromString(sortParts.length > 1 ? sortParts[1] : "asc");

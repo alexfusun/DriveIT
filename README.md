@@ -26,7 +26,7 @@ The project is a hands-on practice exercise for **Spring Boot** backend developm
 
 ## Tech Stack
 
-### Backend *(in progress — admin endpoints next)*
+### Backend *(complete)*
 | Layer | Technology |
 |---|---|
 | Framework | Spring Boot 3.5 |
@@ -65,11 +65,13 @@ driveIT/
 │   │   ├── main/java/com/driveit/
 │   │   │   ├── BackendApplication.java
 │   │   │   ├── auth/               # DTOs, JwtUtil/JwtFilter, SecurityConfig, AuthController/Service
-│   │   │   ├── user/               # User entity, Role/PublisherRank enums, repository
+│   │   │   ├── user/               # User entity/enums, UserService/Controller, profile DTOs
+│   │   │   ├── publisher/          # PublisherService/Controller, PublisherResponse/Mapper
 │   │   │   ├── brand/              # Brand & CarModel entities, repos, DTOs, BrandService/Controller
 │   │   │   ├── car/                # Car, CarSpec, CarImage entities, full CRUD service/controller
 │   │   │   ├── review/             # Review entities, DTOs, mapper, ReviewService/Controller
 │   │   │   ├── like/               # ReviewLike entity, repo, DTO, LikeService/Controller
+│   │   │   ├── admin/              # AdminService/Controller, role & rank update DTOs
 │   │   │   ├── common/             # PageResponse and other shared DTOs
 │   │   │   └── exception/          # GlobalExceptionHandler, custom exceptions
 │   │   └── resources/
@@ -133,18 +135,17 @@ Ranks are assigned manually by admins (automatic milestones planned for a future
 - [x] PostgreSQL running in Docker
 - [x] React frontend complete (all pages, components, and API service layer)
 
-### Backend — in progress
+### Backend — complete ✅
 - [x] Flyway migrations for all tables (users, brands & models, cars, reviews, likes)
-- [x] `User` entity, `Role`/`PublisherRank` enums, and `UserRepository`
-- [x] Auth flow complete: DTOs, `JwtUtil`/`JwtFilter`, `SecurityConfig`, `AuthController`/`AuthService` for register & login
-- [x] Global exception handling (`GlobalExceptionHandler`, `ResourceNotFoundException`, `ConflictException`)
-- [x] `Brand` & `CarModel` entities, repositories, DTOs, `BrandService`, `BrandController`
-- [x] `Car`, `CarSpec`, `CarImage` entities + repository, enums (`FuelType`, `Transmission`, `Drivetrain`)
-- [x] Car DTOs and mapper, `CarSpecification` for filtered search, full `CarService` and `CarController` (CRUD + filters + sort + pagination)
-- [x] `Review`, `ReviewPro`, `ReviewCon` entities, `ReviewRepository`, DTOs, mapper, `ReviewService`, `ReviewController` (get/create/update/delete)
-- [x] `ForbiddenException` added to exception handling
-- [x] `ReviewLike` entity, `LikeRepository`, `LikeResponse` DTO, `LikeService`, `LikeController` (like/unlike endpoints)
-- [ ] Admin panel endpoints
+- [x] Auth: `JwtUtil`/`JwtFilter`, `SecurityConfig`, `AuthController`/`AuthService` (register & login)
+- [x] Global exception handling (`GlobalExceptionHandler`, `ResourceNotFoundException`, `ConflictException`, `ForbiddenException`, `BadRequestException`)
+- [x] Brands & car models: entities, repos, DTOs, `BrandService`/`BrandController`
+- [x] Cars: entities, enums, DTOs, mapper, `CarSpecification`, full CRUD `CarService`/`CarController`
+- [x] Reviews: entities, repo, DTOs, mapper, `ReviewService`/`ReviewController` (get/create/update/delete)
+- [x] Likes: `ReviewLike` entity, repo, DTO, `LikeService`/`LikeController` (like/unlike)
+- [x] Publishers: `PublisherService`/`PublisherController`, response DTOs and mapper
+- [x] Users: `UserService`/`UserController`, profile & update DTOs, `UserSpecification` for search
+- [x] Admin: `AdminService`/`AdminController`, role & rank update DTOs and mapper
 
 ### Integration & deployment
 - [ ] End-to-end frontend ↔ backend integration testing
