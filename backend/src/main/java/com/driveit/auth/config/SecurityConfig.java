@@ -64,6 +64,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/reviews/*/like").hasRole("USER")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/reviews/**").hasAnyRole("PUBLISHER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/reviews/**").hasAnyRole("PUBLISHER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/me/reviews").hasRole("PUBLISHER")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
