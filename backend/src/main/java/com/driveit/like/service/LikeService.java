@@ -34,12 +34,19 @@ public class LikeService {
             throw new ConflictException("User has already liked this review");
         }
 
+        // Create Like entity - Assign review and user to it
         ReviewLike reviewLike = new ReviewLike();
         reviewLike.setReview(review);
         reviewLike.setUser(user);
         likeRepository.save(reviewLike);
+
+        // Update like count on review and user
         review.setLikeCount(review.getLikeCount() + 1);
         reviewRepository.save(review);
+
+        User publisher = review.getPublisher();
+        publisher.setTotalLikes(publisher.getTotalLikes() + 1);
+        userRepository.save(publisher);
 
         return new LikeResponse(reviewId, review.getLikeCount(), true);
     }
@@ -49,10 +56,16 @@ public class LikeService {
 
         ReviewLike reviewLike = likeRepository.findByReviewIdAndUserId(reviewId, userId).orElseThrow(() -> new ResourceNotFoundException("User has not liked this review"));
         
-
+        // Delete Like entity
         likeRepository.delete(reviewLike);
+
+        // Update like count on review and user
         review.setLikeCount(review.getLikeCount() - 1);
         reviewRepository.save(review);
+
+        User publisher = review.getPublisher();
+        publisher.setTotalLikes(publisher.getTotalLikes() - 1);
+        userRepository.save(publisher);
 
         return new LikeResponse(reviewId, review.getLikeCount(), false);
     }
