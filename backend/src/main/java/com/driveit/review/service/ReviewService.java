@@ -18,6 +18,7 @@ import com.driveit.car.repository.CarRepository;
 import com.driveit.exception.ConflictException;
 import com.driveit.exception.ForbiddenException;
 import com.driveit.exception.ResourceNotFoundException;
+import com.driveit.like.repository.LikeRepository;
 import com.driveit.review.dto.ReviewMapper;
 import com.driveit.review.dto.ReviewPageResponse;
 import com.driveit.review.dto.ReviewRequest;
@@ -38,25 +39,35 @@ public class ReviewService {
     private final CarRepository carRepository;
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
+    private final LikeRepository likeRepository;
     
     @Transactional(readOnly = true) 
     public ReviewPageResponse getReviews(Long carId, int page, int size,
                                         String sort, Long currentUserId) 
     {
+        // Fetch car
         Car car = carRepository.findById(carId).orElseThrow(() -> new ResourceNotFoundException("Car not found with id: " + carId));              
         
+        // Build pageable
         String[] sortParts = sort.split(",");
         Sort.Direction direction = Sort.Direction.fromString(sortParts.length > 1 ? sortParts[1] : "asc");
         Sort sortOrder = Sort.by(direction, sortParts[0]);
 
         Pageable pageable = PageRequest.of(page, Math.min(size, 50), sortOrder);
 
+        // Fetch reviews and likes
         Page<Review> reviews = reviewRepository.findByCarId(carId, pageable);
 
+        List<Long> reviewIds = reviews.getContent().stream()
+            .map(Review::getId)
+            .toList();
+        List<Long> likedReviewIds = likeRepository.findLikedReviewIds(currentUserId, reviewIds);
+
         List<ReviewResponse> content = reviews.getContent().stream()
-            .map(r -> ReviewMapper.toResponse(r, false))
+            .map(r -> ReviewMapper.toResponse(r, likedReviewIds.contains(r.getId())))
             .toList();
 
+        // Calculate rating
         Map<Integer, Integer> ratingDistribution = new HashMap<>();
         for (int i = 1; i <= 5; i++) {
             int rating = i;
