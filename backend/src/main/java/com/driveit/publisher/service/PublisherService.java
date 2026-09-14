@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.driveit.common.PageResponse;
 import com.driveit.exception.ResourceNotFoundException;
+import com.driveit.like.repository.LikeRepository;
 import com.driveit.publisher.dto.PublisherMapper;
 import com.driveit.publisher.dto.PublisherResponse;
 import com.driveit.review.dto.ReviewMapper;
@@ -31,6 +32,7 @@ public class PublisherService {
 
     private final UserRepository userRepository;
     private final ReviewRepository reviewRepository;
+    private final LikeRepository likeRepository;
 
     public PageResponse<PublisherResponse> getPublishers(PublisherRank rank, int page, int size) {
         Page<User> users;
@@ -65,21 +67,29 @@ public class PublisherService {
     }
 
     @Transactional(readOnly = true)
-    public ReviewPageResponse getPublisherReviews(Long publisherId, int page, int size, String sort) {
+    public ReviewPageResponse getPublisherReviews(Long publisherId, int page, int size, String sort, Long currentUserId) {
+        // Fetch User
         User user = userRepository.findById(publisherId).orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + publisherId));
         if (!user.getRole().equals(Role.PUBLISHER))
             throw new ResourceNotFoundException("User is not a publisher");
 
+        // Build pageable
         String[] sortParts = sort.split(",");
         Sort.Direction direction = Sort.Direction.fromString(sortParts.length > 1 ? sortParts[1] : "asc");
         Sort sortOrder = Sort.by(direction, sortParts[0]);
 
         Pageable pageable = PageRequest.of(page, Math.min(size, 50), sortOrder);
 
+        // Fetch reviews and likes
         Page<Review> reviews = reviewRepository.findByPublisherId(publisherId, pageable);
 
+        List<Long> reviewIds = reviews.getContent().stream()
+            .map(Review::getId)
+            .toList();
+        List<Long> likedReviewIds = likeRepository.findLikedReviewIds(currentUserId, reviewIds);
+
         List<ReviewResponse> content = reviews.getContent().stream()
-            .map(r -> ReviewMapper.toResponse(r, false))
+            .map(r -> ReviewMapper.toResponse(r, likedReviewIds.contains(r.getId())))
             .toList();
 
         return new ReviewPageResponse(
