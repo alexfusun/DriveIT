@@ -1,6 +1,8 @@
 package com.driveit.car.service;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 import org.springframework.data.domain.Pageable;
@@ -14,10 +16,12 @@ import com.driveit.brand.entity.Brand;
 import com.driveit.brand.entity.CarModel;
 import com.driveit.brand.repository.BrandRepository;
 import com.driveit.brand.repository.CarModelRepository;
+import com.driveit.car.dto.CarCompareResponse;
 import com.driveit.car.dto.CarDetailResponse;
 import com.driveit.car.dto.CarMapper;
 import com.driveit.car.dto.CarRequest;
 import com.driveit.car.dto.CarSummaryResponse;
+import com.driveit.car.dto.ComparisonHighlights;
 import com.driveit.car.entity.Car;
 import com.driveit.car.entity.CarImage;
 import com.driveit.car.entity.CarSpec;
@@ -25,6 +29,7 @@ import com.driveit.car.entity.FuelType;
 import com.driveit.car.repository.CarRepository;
 import com.driveit.common.PageResponse;
 import com.driveit.exception.ResourceNotFoundException;
+import com.driveit.exception.BadRequestException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -185,5 +190,48 @@ public class CarService {
                     .orElseThrow(() -> new ResourceNotFoundException("Car not found with id " + id));
         
         carRepository.delete(car);
+    }
+
+    public CarCompareResponse compareCars(String ids) {
+        // Parse input into List of Long values and validate
+        List<Long> idList;
+        try {
+            idList = Arrays.stream(ids.split(","))
+                .map(String::trim)
+                .map(Long::parseLong)
+                .toList();
+        } catch (NumberFormatException e) {
+            throw new BadRequestException("ids must be a comma separated list of numbers");
+        }
+        if (idList.size() < 2 || idList.size() > 4)
+            throw new BadRequestException("Cannot compare less than 2 cars or more than 4 cars");
+        
+        // Find cars and validate
+        List<Car> cars = carRepository.findAllById(idList);
+        if (cars.size() != idList.size())
+            throw new ResourceNotFoundException("Cannot find some cars with the ids provided");
+
+        List<CarDetailResponse> content = cars.stream()
+            .map(CarMapper::toDetailResponse)
+            .toList();
+
+        Long cheapestId = cars.stream()
+            .min(Comparator.comparing(Car::getPrice))
+            .get()
+            .getId();
+
+        Long mostPowerfulId = cars.stream()
+            .max(Comparator.comparing(car -> car.getSpec().getHorsepower()))
+            .get()
+            .getId();
+
+        Long mostEfficientId = cars.stream()
+            .min(Comparator.comparing(car -> car.getSpec().getConsumption()))
+            .get()
+            .getId();
+        
+        ComparisonHighlights highlights = new ComparisonHighlights(cheapestId, mostPowerfulId, mostEfficientId);
+
+        return new CarCompareResponse(content, highlights);
     }
 }
