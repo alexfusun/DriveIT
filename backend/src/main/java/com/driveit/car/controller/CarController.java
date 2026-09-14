@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.driveit.car.dto.CarCompareResponse;
 import com.driveit.car.dto.CarDetailResponse;
 import com.driveit.car.dto.CarRequest;
 import com.driveit.car.dto.CarSummaryResponse;
@@ -68,5 +69,12 @@ public class CarController {
         carService.deleteCar(id);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/compare")
+    public ResponseEntity<CarCompareResponse> compareCars(@RequestParam String ids) {
+        CarCompareResponse result = carService.compareCars(ids);
+
+        return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 }
