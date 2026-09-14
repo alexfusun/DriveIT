@@ -7,6 +7,8 @@ import org.springframework.data.jpa.domain.Specification;
 import com.driveit.car.entity.Car;
 import com.driveit.car.entity.FuelType;
 
+import jakarta.persistence.criteria.Predicate;
+
 public final class CarSpecification {
 
     public static Specification<Car> hasBrand(String brand) {
@@ -15,8 +17,16 @@ public final class CarSpecification {
     }
 
     public static Specification<Car> hasModel(String model) {
-        return (root, query, cb) ->
-            model == null ? null : cb.equal(root.get("carModel").get("name"), model);
+        return (root, query, cb) -> {
+            if (model == null)
+                return null;
+
+            String pattern = "%" + model.toLowerCase() + "%";
+
+            Predicate modelMatch = cb.like(cb.lower(root.get("carModel").get("name")), pattern);
+
+            return modelMatch;
+        };
     }
 
     public static Specification<Car> hasYear(Integer year) {
