@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { getPublisher, getPublisherReviews } from '../services/publishersService'
+import { updateReview, deleteReview } from '../services/reviewsService'
 import ReviewCard from '../components/ReviewCard'
+import ReviewForm from '../components/ReviewForm'
 import Pagination from '../components/Pagination'
 import Spinner from '../components/Spinner'
 
@@ -19,17 +21,38 @@ export default function PublisherProfilePage() {
   const [meta, setMeta] = useState({ totalElements: 0, totalPages: 0, currentPage: 0 })
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(0)
+  const [editingReview, setEditingReview] = useState(null)
+  const [reviewFormLoading, setReviewFormLoading] = useState(false)
 
   useEffect(() => {
     getPublisher(id).then(({ data }) => setPublisher(data)).catch(() => {}).finally(() => setLoading(false))
   }, [id])
 
-  useEffect(() => {
+  const fetchReviews = () => {
     getPublisherReviews(id, { page, size: 5 }).then(({ data }) => {
       setReviews(data.content || [])
       setMeta({ totalElements: data.totalElements, totalPages: data.totalPages, currentPage: data.currentPage })
     }).catch(() => {})
+  }
+
+  useEffect(() => {
+    fetchReviews()
   }, [id, page])
+
+  const handleEditReview = async (data) => {
+    setReviewFormLoading(true)
+    try {
+      await updateReview(editingReview.id, data)
+      setEditingReview(null)
+      fetchReviews()
+    } catch { /* ignore */ } finally { setReviewFormLoading(false) }
+  }
+
+  const handleDeleteReview = async (reviewId) => {
+    if (!confirm('¿Eliminar esta reseña?')) return
+    await deleteReview(reviewId)
+    fetchReviews()
+  }
 
   if (loading) return <Spinner className="h-96" />
   if (!publisher) return <div className="text-center py-20 text-slate-500">Publisher no encontrado.</div>
@@ -70,8 +93,28 @@ export default function PublisherProfilePage() {
       </div>
 
       <h2 className="text-xl font-bold text-slate-900 mb-4">Reseñas ({meta.totalElements})</h2>
+
+      {editingReview && (
+        <div className="bg-white rounded-xl border border-slate-200 p-5 mb-5">
+          <h3 className="font-semibold text-slate-800 mb-4">Editar reseña</h3>
+          <ReviewForm
+            initial={editingReview}
+            onSubmit={handleEditReview}
+            onCancel={() => setEditingReview(null)}
+            loading={reviewFormLoading}
+          />
+        </div>
+      )}
+
       <div className="space-y-4">
-        {reviews.map((review) => <ReviewCard key={review.id} review={review} />)}
+        {reviews.map((review) => (
+          <ReviewCard
+            key={review.id}
+            review={review}
+            onEdit={(r) => setEditingReview(r)}
+            onDelete={handleDeleteReview}
+          />
+        ))}
       </div>
       {reviews.length === 0 && !loading && (
         <div className="text-center py-12 text-slate-400">Este publisher aún no ha publicado reseñas.</div>

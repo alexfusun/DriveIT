@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { updateMe, getMyReviews } from '../services/usersService'
+import { updateReview, deleteReview } from '../services/reviewsService'
 import { useEffect } from 'react'
 import ReviewCard from '../components/ReviewCard'
+import ReviewForm from '../components/ReviewForm'
 import Pagination from '../components/Pagination'
 
 const RANK_STYLES = {
@@ -22,17 +24,38 @@ export default function ProfilePage() {
   const [reviews, setReviews] = useState([])
   const [meta, setMeta] = useState({ totalElements: 0, totalPages: 0, currentPage: 0 })
   const [page, setPage] = useState(0)
+  const [editingReview, setEditingReview] = useState(null)
+  const [reviewFormLoading, setReviewFormLoading] = useState(false)
 
   const isPublisher = user?.role === 'PUBLISHER'
   const style = RANK_STYLES[user?.rank] || null
 
-  useEffect(() => {
-    if (!isPublisher) return
+  const fetchMyReviews = () => {
     getMyReviews({ page, size: 5 }).then(({ data }) => {
       setReviews(data.content || [])
       setMeta({ totalElements: data.totalElements, totalPages: data.totalPages, currentPage: data.currentPage })
     }).catch(() => {})
+  }
+
+  useEffect(() => {
+    if (!isPublisher) return
+    fetchMyReviews()
   }, [isPublisher, page])
+
+  const handleEditReview = async (data) => {
+    setReviewFormLoading(true)
+    try {
+      await updateReview(editingReview.id, data)
+      setEditingReview(null)
+      fetchMyReviews()
+    } catch { /* ignore */ } finally { setReviewFormLoading(false) }
+  }
+
+  const handleDeleteReview = async (reviewId) => {
+    if (!confirm('¿Eliminar esta reseña?')) return
+    await deleteReview(reviewId)
+    fetchMyReviews()
+  }
 
   const handleSave = async (e) => {
     e.preventDefault()
@@ -130,8 +153,28 @@ export default function ProfilePage() {
       {isPublisher && (
         <div>
           <h2 className="text-xl font-bold text-slate-900 mb-4">Mis reseñas ({meta.totalElements})</h2>
+
+          {editingReview && (
+            <div className="bg-white rounded-xl border border-slate-200 p-5 mb-5">
+              <h3 className="font-semibold text-slate-800 mb-4">Editar reseña</h3>
+              <ReviewForm
+                initial={editingReview}
+                onSubmit={handleEditReview}
+                onCancel={() => setEditingReview(null)}
+                loading={reviewFormLoading}
+              />
+            </div>
+          )}
+
           <div className="space-y-4">
-            {reviews.map((review) => <ReviewCard key={review.id} review={review} />)}
+            {reviews.map((review) => (
+              <ReviewCard
+                key={review.id}
+                review={review}
+                onEdit={(r) => setEditingReview(r)}
+                onDelete={handleDeleteReview}
+              />
+            ))}
           </div>
           {reviews.length === 0 && <p className="text-slate-400 text-sm text-center py-8">Aún no has publicado ninguna reseña.</p>}
           <Pagination currentPage={meta.currentPage} totalPages={meta.totalPages} onPageChange={setPage} />
