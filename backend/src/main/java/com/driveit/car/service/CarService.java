@@ -11,6 +11,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.driveit.brand.entity.Brand;
 import com.driveit.brand.entity.CarModel;
@@ -75,6 +76,7 @@ public class CarService {
         );
     }
 
+    @Transactional(readOnly = true)
     public CarDetailResponse getCarById(Long id) {
         Car car = carRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Car not found with id: " + id));
@@ -132,6 +134,7 @@ public class CarService {
         return CarMapper.toDetailResponse(car);
     }
     
+    @Transactional 
     public CarDetailResponse updateCar(Long id, CarRequest request) {
         Car car = carRepository.findById(id)
                     .orElseThrow(() -> new ResourceNotFoundException("Car not found with id " + id));
@@ -192,6 +195,7 @@ public class CarService {
         carRepository.delete(car);
     }
 
+    @Transactional(readOnly = true)
     public CarCompareResponse compareCars(String ids) {
         // Parse input into List of Long values and validate
         List<Long> idList;
@@ -221,14 +225,16 @@ public class CarService {
             .getId();
 
         Long mostPowerfulId = cars.stream()
+            .filter(car -> car.getSpec().getHorsepower() != null)
             .max(Comparator.comparing(car -> car.getSpec().getHorsepower()))
-            .get()
-            .getId();
+            .map(Car::getId)
+            .orElse(null);
 
         Long mostEfficientId = cars.stream()
+            .filter(car -> car.getSpec().getConsumption() != null)
             .min(Comparator.comparing(car -> car.getSpec().getConsumption()))
-            .get()
-            .getId();
+            .map(Car::getId)
+            .orElse(null);
         
         ComparisonHighlights highlights = new ComparisonHighlights(cheapestId, mostPowerfulId, mostEfficientId);
 

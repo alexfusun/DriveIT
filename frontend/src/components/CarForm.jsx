@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getBrands } from '../services/brandsService'
+import { getBrands, getBrandModels, createBrand, createModel } from '../services/brandsService'
 
 const FUEL_TYPES = ['GASOLINE', 'DIESEL', 'ELECTRIC', 'HYBRID', 'PLUG_IN_HYBRID']
 const FUEL_LABELS = { GASOLINE: 'Gasolina', DIESEL: 'Diésel', ELECTRIC: 'Eléctrico', HYBRID: 'Híbrido', PLUG_IN_HYBRID: 'H. enchufable' }
@@ -10,11 +10,12 @@ const DRIVETRAINS = ['FWD', 'RWD', 'AWD', '4WD']
 function flattenCar(car) {
   const s = car?.specs || {}
   return {
-    brand: car?.brand || '',
-    model: car?.model || '',
+    brandId: '',
+    modelId: '',
     version: car?.version || '',
     year: car?.year ?? '',
     price: car?.price ?? '',
+    imageUrl: car?.imageUrl || '',
     fuelType: s.engine?.fuelType || 'GASOLINE',
     horsepower: s.engine?.horsepower ?? '',
     displacement: s.engine?.displacement ?? '',
@@ -40,11 +41,12 @@ function flattenCar(car) {
 function buildPayload(f) {
   const num = (v) => v === '' ? undefined : Number(v)
   return {
-    brand: f.brand,
-    model: f.model,
+    brandId: num(f.brandId),
+    modelId: num(f.modelId),
     version: f.version,
     year: num(f.year),
     price: num(f.price),
+    imageUrl: f.imageUrl || null,
     specs: {
       engine: {
         fuelType: f.fuelType,
@@ -86,26 +88,113 @@ function Field({ label, children }) {
 
 const inputCls = 'w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
 
+function SectionHeader({ title }) {
+  return (
+    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wide col-span-full border-t border-slate-100 pt-4 mt-2 first:border-0 first:pt-0 first:mt-0">
+      {title}
+    </h4>
+  )
+}
+
 export default function CarForm({ initial, onSubmit, onCancel, loading }) {
   const [form, setForm] = useState(() => flattenCar(initial))
   const [brands, setBrands] = useState([])
+  const [models, setModels] = useState([])
+  const [modelsLoading, setModelsLoading] = useState(false)
 
+  const [addingBrand, setAddingBrand] = useState(false)
+  const [newBrandName, setNewBrandName] = useState('')
+  const [newBrandCountry, setNewBrandCountry] = useState('')
+  const [brandError, setBrandError] = useState('')
+  const [brandSaving, setBrandSaving] = useState(false)
+
+  const [addingModel, setAddingModel] = useState(false)
+  const [newModelName, setNewModelName] = useState('')
+  const [modelError, setModelError] = useState('')
+  const [modelSaving, setModelSaving] = useState(false)
+
+  // Load brands once, then resolve the initial car's brand name -> id (the
+  // detail endpoint only gives us the name, not the id).
   useEffect(() => {
-    getBrands().then(({ data }) => setBrands(data || [])).catch(() => {})
+    getBrands().then(({ data }) => {
+      const list = data || []
+      setBrands(list)
+      if (initial?.brand) {
+        const match = list.find((b) => b.name === initial.brand)
+        if (match) setForm((f) => ({ ...f, brandId: String(match.id) }))
+      }
+    }).catch(() => {})
   }, [])
 
+  // Whenever the selected brand changes, load its models. If we're editing
+  // an existing car, resolve its model name -> id once the list arrives.
+  useEffect(() => {
+    if (!form.brandId) { setModels([]); return }
+    setModelsLoading(true)
+    getBrandModels(form.brandId).then(({ data }) => {
+      const list = data || []
+      setModels(list)
+      if (initial?.model && !form.modelId) {
+        const match = list.find((m) => m.name === initial.model)
+        if (match) setForm((f) => ({ ...f, modelId: String(match.id) }))
+      }
+    }).catch(() => setModels([])).finally(() => setModelsLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.brandId])
+
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
+
+  const handleBrandChange = (e) => {
+    const value = e.target.value
+    if (value === '__new__') { setAddingBrand(true); return }
+    setForm((f) => ({ ...f, brandId: value, modelId: '' }))
+  }
+
+  const handleCreateBrand = async () => {
+    if (!newBrandName.trim()) return
+    setBrandSaving(true)
+    setBrandError('')
+    try {
+      const { data } = await createBrand({ name: newBrandName.trim(), country: newBrandCountry.trim() || undefined })
+      setBrands((b) => [...b, data])
+      setForm((f) => ({ ...f, brandId: String(data.id), modelId: '' }))
+      setAddingBrand(false)
+      setNewBrandName('')
+      setNewBrandCountry('')
+    } catch (err) {
+      setBrandError(err.response?.data?.message || 'No se pudo crear la marca.')
+    } finally {
+      setBrandSaving(false)
+    }
+  }
+
+  const handleModelChange = (e) => {
+    const value = e.target.value
+    if (value === '__new__') { setAddingModel(true); return }
+    setForm((f) => ({ ...f, modelId: value }))
+  }
+
+  const handleCreateModel = async () => {
+    if (!newModelName.trim() || !form.brandId) return
+    setModelSaving(true)
+    setModelError('')
+    try {
+      const { data } = await createModel(form.brandId, { name: newModelName.trim() })
+      setModels((m) => [...m, data])
+      setForm((f) => ({ ...f, modelId: String(data.id) }))
+      setAddingModel(false)
+      setNewModelName('')
+    } catch (err) {
+      setModelError(err.response?.data?.message || 'No se pudo crear el modelo.')
+    } finally {
+      setModelSaving(false)
+    }
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
     onSubmit(buildPayload(form))
   }
-
-  const SectionHeader = ({ title }) => (
-    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wide col-span-full border-t border-slate-100 pt-4 mt-2 first:border-0 first:pt-0 first:mt-0">
-      {title}
-    </h4>
-  )
 
   return (
     <form onSubmit={handleSubmit} className="space-y-0">
@@ -114,17 +203,56 @@ export default function CarForm({ initial, onSubmit, onCancel, loading }) {
         <SectionHeader title="Información básica" />
 
         <Field label="Marca *">
-          <select value={form.brand} onChange={set('brand')} required className={inputCls}>
-            <option value="">Seleccionar...</option>
-            {brands.map((b) => <option key={b.id} value={b.name}>{b.name}</option>)}
-            {/* allow freetext if brand not in list */}
-            {form.brand && !brands.find((b) => b.name === form.brand) && (
-              <option value={form.brand}>{form.brand}</option>
-            )}
-          </select>
+          {addingBrand ? (
+            <div className="space-y-2">
+              {brandError && <p className="text-xs text-red-600">{brandError}</p>}
+              <input value={newBrandName} onChange={(e) => setNewBrandName(e.target.value)}
+                className={inputCls} placeholder="Nombre de la marca" autoFocus />
+              <input value={newBrandCountry} onChange={(e) => setNewBrandCountry(e.target.value)}
+                className={inputCls} placeholder="País (opcional)" />
+              <div className="flex gap-2">
+                <button type="button" onClick={handleCreateBrand} disabled={brandSaving}
+                  className="flex-1 px-2 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 disabled:opacity-60">
+                  {brandSaving ? 'Creando...' : 'Crear marca'}
+                </button>
+                <button type="button" onClick={() => { setAddingBrand(false); setBrandError('') }}
+                  className="px-2 py-1.5 text-xs font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50">
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <select value={form.brandId} onChange={handleBrandChange} required className={inputCls}>
+              <option value="">Seleccionar...</option>
+              {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+              <option value="__new__">+ Añadir nueva marca...</option>
+            </select>
+          )}
         </Field>
         <Field label="Modelo *">
-          <input value={form.model} onChange={set('model')} required className={inputCls} placeholder="Corolla" />
+          {addingModel ? (
+            <div className="space-y-2">
+              {modelError && <p className="text-xs text-red-600">{modelError}</p>}
+              <input value={newModelName} onChange={(e) => setNewModelName(e.target.value)}
+                className={inputCls} placeholder="Nombre del modelo" autoFocus />
+              <div className="flex gap-2">
+                <button type="button" onClick={handleCreateModel} disabled={modelSaving}
+                  className="flex-1 px-2 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 disabled:opacity-60">
+                  {modelSaving ? 'Creando...' : 'Crear modelo'}
+                </button>
+                <button type="button" onClick={() => { setAddingModel(false); setModelError('') }}
+                  className="px-2 py-1.5 text-xs font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50">
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <select value={form.modelId} onChange={handleModelChange} required disabled={!form.brandId || modelsLoading} className={inputCls}>
+              <option value="">{modelsLoading ? 'Cargando...' : 'Seleccionar...'}</option>
+              {models.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+              {form.brandId && <option value="__new__">+ Añadir nuevo modelo...</option>}
+            </select>
+          )}
         </Field>
         <Field label="Versión">
           <input value={form.version} onChange={set('version')} className={inputCls} placeholder="1.8 Hybrid Active Tech" />
@@ -134,6 +262,9 @@ export default function CarForm({ initial, onSubmit, onCancel, loading }) {
         </Field>
         <Field label="Precio (€) *">
           <input type="number" value={form.price} onChange={set('price')} required min="0" step="0.01" className={inputCls} placeholder="27500" />
+        </Field>
+        <Field label="Imagen principal (URL)">
+          <input value={form.imageUrl} onChange={set('imageUrl')} className={inputCls} placeholder="https://example.com/cover.jpg" />
         </Field>
 
         <SectionHeader title="Motor" />
@@ -208,7 +339,7 @@ export default function CarForm({ initial, onSubmit, onCancel, loading }) {
         <SectionHeader title="Imágenes" />
 
         <div className="col-span-full">
-          <Field label="URLs de imágenes (una por línea)">
+          <Field label="URLs de imágenes de galería (una por línea)">
             <textarea
               value={form.images} onChange={set('images')} rows={3}
               className={`${inputCls} resize-none`}
