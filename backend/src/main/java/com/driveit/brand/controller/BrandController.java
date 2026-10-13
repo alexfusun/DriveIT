@@ -6,13 +6,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.driveit.brand.dto.BrandRequest;
 import com.driveit.brand.dto.BrandResponse;
+import com.driveit.brand.dto.CarModelRequest;
 import com.driveit.brand.dto.CarModelResponse;
 import com.driveit.brand.service.BrandService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -34,6 +39,20 @@ public class BrandController {
         List<CarModelResponse> result = brandService.getModelsByBrand(id);
 
         return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
+    @PostMapping("")
+    public ResponseEntity<BrandResponse> createBrand(@RequestBody @Valid BrandRequest request) {
+        BrandResponse result = brandService.createBrand(request);
+        
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
+    }
+
+    @PostMapping("/{id}/models")
+    public ResponseEntity<CarModelResponse> createModel(@PathVariable Long id, @RequestBody @Valid CarModelRequest request) {
+        CarModelResponse result = brandService.createModel(id, request);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
     
 }
