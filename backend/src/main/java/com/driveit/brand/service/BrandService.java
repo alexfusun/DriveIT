@@ -5,13 +5,16 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.driveit.brand.dto.BrandRequest;
 import com.driveit.brand.dto.BrandResponse;
+import com.driveit.brand.dto.CarModelRequest;
 import com.driveit.brand.dto.CarModelResponse;
 import com.driveit.brand.entity.Brand;
 import com.driveit.brand.entity.CarModel;
 import com.driveit.brand.repository.BrandRepository;
 import com.driveit.brand.repository.CarModelRepository;
 import com.driveit.car.repository.CarRepository;
+import com.driveit.exception.ConflictException;
 import com.driveit.exception.ResourceNotFoundException;
 
 import lombok.RequiredArgsConstructor;
@@ -39,7 +42,7 @@ public class BrandService {
 
     public List<CarModelResponse> getModelsByBrand(Long brandId) {
         if (!brandRepository.existsById(brandId)) {
-            throw new ResourceNotFoundException("Brand not found");
+            throw new ResourceNotFoundException("Brand not found with id: " + brandId);
         }
 
         List<CarModelResponse> models = new ArrayList<>();
@@ -52,6 +55,36 @@ public class BrandService {
         }
 
         return models;
+    }
+
+    public BrandResponse createBrand(BrandRequest request) {
+        if (brandRepository.existsByName(request.name())) {
+            throw new ConflictException("Brand already exists");
+        }
+
+        Brand brand = new Brand();
+        brand.setName(request.name());
+        brand.setCountry(request.country());
+        brand.setLogoUrl(request.logoUrl());
+        Brand saved = brandRepository.save(brand);
+
+        return new BrandResponse(saved.getId(), saved.getName(), saved.getCountry(), saved.getLogoUrl());
+    }
+
+    public CarModelResponse createModel(Long brandId, CarModelRequest request) {
+        Brand brand = brandRepository.findById(brandId)
+            .orElseThrow(() -> new ResourceNotFoundException("Brand not found with id: " + brandId));
+
+        if (carModelRepository.existsByBrandIdAndName(brandId, request.name())) {
+            throw new ConflictException("Car model already exists");
+        }
+
+        CarModel model = new CarModel();
+        model.setBrand(brand);
+        model.setName(request.name());
+        CarModel saved = carModelRepository.save(model);
+
+        return new CarModelResponse(saved.getId(), saved.getName(), brandId, List.of());
     }
     
 }
