@@ -68,7 +68,7 @@ driveIT/
 │   │   │   ├── user/               # User entity/enums, UserService/Controller, profile DTOs
 │   │   │   ├── publisher/          # PublisherService/Controller, PublisherResponse/Mapper
 │   │   │   ├── brand/              # Brand & CarModel entities, repos, DTOs, BrandService/Controller
-│   │   │   ├── car/                # Car, CarSpec, CarImage entities, full CRUD service/controller
+│   │   │   ├── car/                # Car entities, full CRUD + comparator DTOs, service/controller
 │   │   │   ├── review/             # Review entities, DTOs, mapper, ReviewService/Controller
 │   │   │   ├── like/               # ReviewLike entity, repo, DTO, LikeService/Controller
 │   │   │   ├── admin/              # AdminService/Controller, role & rank update DTOs
@@ -77,6 +77,11 @@ driveIT/
 │   │   └── resources/
 │   │       ├── application.yml
 │   │       └── db/migration/        # Flyway scripts (users, brands/models, cars, reviews, likes)
+│   ├── src/test/java/com/driveit/
+│   │   ├── auth/               # SecurityConfigTest (integration)
+│   │   ├── like/               # LikeServiceTest (unit), LikeRepositoryTest (integration)
+│   │   ├── review/             # ReviewServiceTest (unit), ReviewServiceIntegrationTest
+│   │   └── admin/              # AdminServiceTest (unit)
 │   └── pom.xml
 └── frontend/                  # React application (Claude-generated)
     ├── src/
@@ -140,15 +145,22 @@ Ranks are assigned manually by admins (automatic milestones planned for a future
 - [x] Auth: `JwtUtil`/`JwtFilter`, `SecurityConfig`, `AuthController`/`AuthService` (register & login)
 - [x] Global exception handling (`GlobalExceptionHandler`, `ResourceNotFoundException`, `ConflictException`, `ForbiddenException`, `BadRequestException`)
 - [x] Brands & car models: entities, repos, DTOs, `BrandService`/`BrandController`
-- [x] Cars: entities, enums, DTOs, mapper, `CarSpecification`, full CRUD `CarService`/`CarController`
+- [x] Cars: entities, enums, DTOs, mapper, `CarSpecification`, full CRUD `CarService`/`CarController`, comparator DTOs (`CarCompareResponse`, `ComparisonHighlights`)
 - [x] Reviews: entities, repo, DTOs, mapper, `ReviewService`/`ReviewController` (get/create/update/delete)
 - [x] Likes: `ReviewLike` entity, repo, DTO, `LikeService`/`LikeController` (like/unlike)
 - [x] Publishers: `PublisherService`/`PublisherController`, response DTOs and mapper
 - [x] Users: `UserService`/`UserController`, profile & update DTOs, `UserSpecification` for search
 - [x] Admin: `AdminService`/`AdminController`, role & rank update DTOs and mapper
 
-### Integration & deployment
-- [ ] End-to-end frontend ↔ backend integration testing
+### Testing & bug fixes — in progress
+- [x] Unit tests: `LikeServiceTest`, `AdminServiceTest`, `ReviewServiceTest`
+- [x] Integration tests: `LikeRepositoryTest`, `SecurityConfigTest`, `ReviewServiceIntegrationTest` (lazy-loading of pros/cons)
+- [x] Bug fix: `likedByMe` always returning false in review and publisher review responses
+- [x] Bug fix: car model search now case-insensitive with partial matching
+- [x] Frontend: edit/delete review buttons on publisher profile and own-reviews pages
+- [ ] Remaining service/controller test coverage
+
+### Deployment
 - [ ] Dockerise full stack
 - [ ] Deploy to Railway / Render
 
