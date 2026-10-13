@@ -5,4 +5,6 @@ import com.driveit.brand.entity.Brand;
 
 public interface BrandRepository extends JpaRepository<Brand, Long> {
     
+    boolean existsByName(String name);
+
 }

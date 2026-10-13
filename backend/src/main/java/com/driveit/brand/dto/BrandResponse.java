@@ -1,6 +1,6 @@
 package com.driveit.brand.dto;
 
-public record BrandResponse (
+public record BrandResponse(
     Long id,
     String name,
     String country,
